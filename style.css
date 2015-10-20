@@ -1,0 +1,40 @@
+body {
+	background-color: #FFF;
+}
+
+#cform {
+  width: 250px;
+  margin: 0 auto;
+}
+
+#cform input[type="text"] {
+  
+  padding: 10pt;
+  margin: 5pt 0pt;
+  border: solid 5px #c9c9c9;
+  box-shadow: inset 0 0 0 1px #707070;
+  transition: box-shadow 0.3s, border 0.3s;
+}
+#cform input[type="text"]:focus,
+#cform input[type="text"].focus {
+  border: solid 5px #969696;
+}
+
+.result {
+    display: block;
+    width: 500pt;
+    height: 50px;
+    margin: 20px auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: #FFF;
+}
+
+.result p {
+    width: 500pt;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin: 0pt;
+    padding: 0pt;
+}
