@@ -64,7 +64,7 @@
     }
 ?>
 
-<center><img src="logo-telegraaf.png" /></center>
+<center><a href="index.php"><img src="logo-telegraaf.png" /></a></center>
 
 <div id="cform">
     <form action="index.php" method="get">
