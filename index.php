@@ -10,15 +10,22 @@
     if (isset($_GET['title']) and isset($_GET['text'])) {
         $title = $_GET['title'];
         $text = $_GET['text'];
+        $subject = $_GET['subject'];
         
         $params['index'] = 'telegraaf';
         $params['type'] = 'doc';
+        $params['body']['size'] = 100;
+        
         $params['body']['query']['bool']['should'] = array();
+        $params['body']['query']['bool']['must'] = array();
         if (!empty($title)) {
-            array_push($params['body']['query']['bool']['should'], array('match' => array('title' => $title)));
+            array_push($params['body']['query']['bool']['should'], array('match' => array('title' => array('query' => $title, 'operator' => 'and', 'boost' => 2) )));
         }
         if (!empty($text)) {
-            array_push($params['body']['query']['bool']['should'], array('match' => array('text' => $text)));
+            array_push($params['body']['query']['bool']['should'], array('match' => array('text' => array('query' => $text, 'operator' => 'and') )));
+        }
+        if (!empty($subject)) {
+            array_push($params['body']['query']['bool']['must'], array('match' => array('subject' => $subject)));
         }
         
         $response = $client->search($params);
@@ -27,6 +34,18 @@
             $results = $response['hits']['hits'];
         }
 	}
+    
+    // Facets
+    if (isset($results)) {
+        $facets = array();
+        foreach ($results as $r) {
+            $subject = $r['_source']['subject'];
+            if (!isset($facets[$subject])) {
+                $facets[$subject] = 0;
+            }
+            $facets[$subject]++;
+        }
+    }
     
     // Plot timeline
     if (isset($results)) {
@@ -54,6 +73,13 @@
 
 <?php
 if (isset($results)) {
+    ?>
+    <ul><?php
+    foreach ($facets as $subject => $count) {
+        echo sprintf("<li><a href='http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]&subject=%s'>%s (%d)</a></li>", $subject, $subject, $count);
+    }
+    ?>
+    </ul><?php
     foreach ($results as $r) {
     ?>
         <div class="result">
