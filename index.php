@@ -22,10 +22,10 @@
             array_push($params['body']['query']['bool']['should'], array('match' => array('title' => array('query' => $title, 'operator' => 'and', 'boost' => 2) )));
         }
         if (!empty($text)) {
-            array_push($params['body']['query']['bool']['should'], array('match' => array('text' => array('query' => $text, 'operator' => 'and') )));
+            array_push($params['body']['query']['bool']['should'], array('match' => array('text' => array('query' => $text, 'operator' => 'and', 'boost' => 1) )));
         }
         if (!empty($subject)) {
-            array_push($params['body']['query']['bool']['must'], array('match' => array('subject' => $subject)));
+            //array_push($params['body']['query']['bool']['must'], array('match' => array('subject' => $subject)));
         }
         
         $response = $client->search($params);
@@ -39,11 +39,11 @@
     if (isset($results)) {
         $facets = array();
         foreach ($results as $r) {
-            $subject = $r['_source']['subject'];
-            if (!isset($facets[$subject])) {
-                $facets[$subject] = 0;
+            $sub = $r['_source']['subject'];
+            if (!isset($facets[$sub])) {
+                $facets[$sub] = 0;
             }
-            $facets[$subject]++;
+            $facets[$sub]++;
         }
     }
     
@@ -52,8 +52,11 @@
         $fp = fopen('years', 'w');
         $years = array();
         foreach ($results as $r) {
-            $year = explode('-', $r['_source']['date'])[0];
-            fwrite($fp, $year . PHP_EOL);
+            // Filter results based on facet
+            if ($r['_source']['subject'] === $subject) {
+                $year = explode('-', $r['_source']['date'])[0];
+                fwrite($fp, $year . PHP_EOL);
+            }
         }
         fclose($fp);
 
@@ -75,24 +78,27 @@
 if (isset($results)) {
     ?>
     <ul><?php
-    foreach ($facets as $subject => $count) {
-        echo sprintf("<li><a href='http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]&subject=%s'>%s (%d)</a></li>", $subject, $subject, $count);
+    foreach ($facets as $fsubject => $count) {
+        echo sprintf("<li><a href='http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]&subject=%s'>%s (%d)</a></li>", $fsubject, $fsubject, $count);
     }
     ?>
     </ul><?php
     foreach ($results as $r) {
-    ?>
-        <div class="result">
-            <?php
-            if (!empty($r['_source']['title'])) {
-                echo "<a href=\"" .$r['_source']['source']. "\">" .$r['_source']['title'] . " | " . $r['_source']['date'] . "</a>";
-            } else {
-                echo "<a href=\"" .$r['_source']['source']. "\">Advertentie"  . " | " . $r['_source']['date'] . "</a>";
-            }
-            ?>
-            <p><?php echo $r['_source']['text']; ?></p>
-        </div>
-    <?php
+        // Filter results based on facet
+        if ($r['_source']['subject'] === $subject) {
+        ?>
+            <div class="result">
+                <?php
+                if (!empty($r['_source']['title'])) {
+                    echo "<a href=\"" .$r['_source']['source']. "\">" .$r['_source']['title'] . " | " . $r['_source']['date'] . "</a>";
+                } else {
+                    echo "<a href=\"" .$r['_source']['source']. "\">" . $r['_source']['subject'] . " | " . $r['_source']['date'] . "</a>";
+                }
+                ?>
+                <p><?php echo $r['_source']['text']; ?></p>
+            </div>
+        <?php
+        }
     }
     echo '<center><img src="timeline.png" /></center>';
 } else {
